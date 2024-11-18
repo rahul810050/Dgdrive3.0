@@ -13,10 +13,11 @@ function App() {
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-
     const loadProvider = async () => {
-      if (provider) {
+      if (window.ethereum) {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+
+        // Listen for changes
         window.ethereum.on("chainChanged", () => {
           window.location.reload();
         });
@@ -24,26 +25,37 @@ function App() {
         window.ethereum.on("accountsChanged", () => {
           window.location.reload();
         });
-        await provider.send("eth_requestAccounts", []);
-        const signer = provider.getSigner();
-        const address = await signer.getAddress();
-        setAccount(address);
-        let contractAddress = "Your Contract Address Here";
 
-        const contract = new ethers.Contract(
-          contractAddress,
-          Upload.abi,
-          signer
-        );
-        //console.log(contract);
-        setContract(contract);
-        setProvider(provider);
+        try {
+          await provider.send("eth_requestAccounts", []);
+          const signer = provider.getSigner();
+          const address = await signer.getAddress();
+          setAccount(address);
+
+          // Replace with your deployed contract address
+          const contractAddress = "0xYourDeployedContractAddressHere";
+
+          // Create the contract instance
+          const contract = new ethers.Contract(
+            contractAddress,
+            Upload.abi,
+            signer
+          );
+
+          setContract(contract);
+          setProvider(provider);
+        } catch (err) {
+          console.error("Failed to connect wallet:", err);
+        }
       } else {
-        console.error("Metamask is not installed");
+        console.error("MetaMask is not installed");
+        alert("Please install MetaMask to use this application.");
       }
     };
-    provider && loadProvider();
+
+    loadProvider();
   }, []);
+
   return (
     <>
       {!modalOpen && (
@@ -57,12 +69,12 @@ function App() {
 
       <div className="App">
         <h1 style={{ color: "white" }}>Gdrive 3.0</h1>
-        <div class="bg"></div>
-        <div class="bg bg2"></div>
-        <div class="bg bg3"></div>
+        <div className="bg"></div>
+        <div className="bg bg2"></div>
+        <div className="bg bg3"></div>
 
         <p style={{ color: "white" }}>
-          Account : {account ? account : "Not connected"}
+          Account: {account ? account : "Not connected"}
         </p>
         <FileUpload
           account={account}

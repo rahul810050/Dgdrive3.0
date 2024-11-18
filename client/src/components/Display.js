@@ -1,44 +1,49 @@
 import { useState } from "react";
 import "./Display.css";
+
 const Display = ({ contract, account }) => {
-  const [data, setData] = useState("");
-  const getdata = async () => {
+  const [data, setData] = useState([]);
+  const [address, setAddress] = useState("");
+
+  const getData = async () => {
     let dataArray;
-    const Otheraddress = document.querySelector(".address").value;
+    const userAddress = address || account;
+
     try {
-      if (Otheraddress) {
-        dataArray = await contract.display(Otheraddress);
-        console.log(dataArray);
-      } else {
-        dataArray = await contract.display(account);
-      }
+      // Fetch data from the contract using the provided address or the default account
+      dataArray = await contract.display(userAddress);
+      console.log(dataArray);
     } catch (e) {
       alert("You don't have access");
+      return;
     }
-    const isEmpty = Object.keys(dataArray).length === 0;
 
-    if (!isEmpty) {
-      const str = dataArray.toString();
-      const str_array = str.split(",");
-      // console.log(str);
-      // console.log(str_array);
-      const images = str_array.map((item, i) => {
-        return (
-          <a href={item} key={i} target="_blank">
-            <img
-              key={i}
-              src={`https://gateway.pinata.cloud/ipfs/${item.substring(6)}`}
-              alt="new"
-              className="image-list"
-            ></img>
-          </a>
-        );
-      });
+    // Check if the dataArray is empty or undefined
+    if (dataArray && dataArray.length > 0) {
+      const strArray = dataArray.toString().split(",");
+
+      // Map over the string array and create image elements
+      const images = strArray.map((item, i) => (
+        <a
+          href={`https://gateway.pinata.cloud/ipfs/${item.substring(6)}`}
+          key={i}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            src={`https://gateway.pinata.cloud/ipfs/${item.substring(6)}`}
+            alt={`Image ${i + 1}`}
+            className="image-list"
+          />
+        </a>
+      ));
+
       setData(images);
     } else {
       alert("No image to display");
     }
   };
+
   return (
     <>
       <div className="image-list">{data}</div>
@@ -46,11 +51,14 @@ const Display = ({ contract, account }) => {
         type="text"
         placeholder="Enter Address"
         className="address"
-      ></input>
-      <button className="center button" onClick={getdata}>
+        value={address}
+        onChange={(e) => setAddress(e.target.value)}
+      />
+      <button className="center button" onClick={getData}>
         Get Data
       </button>
     </>
   );
 };
+
 export default Display;
